@@ -48,8 +48,9 @@ const initializeBrowser = async () => {
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage', // Prevents running out of memory in Docker
-                '--disable-infobars', // Disables the infobars
-                '--window-size=1920x1080' // Sets the window size for the browser
+                '--disable-infobars',
+                '--window-size=1920x1080',
+                '--remote-debugging-port=9222' // Useful for debugging
             ],
         });
     } catch (error) {
