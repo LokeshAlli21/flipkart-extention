@@ -1,70 +1,134 @@
 import dotenv from 'dotenv';
+dotenv.config();
+
 import puppeteer from 'puppeteer';
 import express from 'express';
 import cors from 'cors';
 
-dotenv.config();
-
 const app = express();
-app.use(cors());
+app.use(cors());  // Enable CORS for all requests
 
+// Health check route
 app.get('/', (req, res) => {
-    res.send("Server is up and running!");
+    res.send("Server is running!");
 });
 
-app.get('/start-puppeteer', async (req, res) => {
-    let browser;
+// Route to handle Flipkart URL input
+app.get('/start-puppeteer', async (req, res) => { 
+    const flipkartUrl = req.query.url;
+
+    if (!flipkartUrl) {
+        return res.status(400).send('Flipkart URL is required.');
+    }
+
     try {
-        const flipkartUrl = req.query.url;
-
-        if (!flipkartUrl) {
-            return res.status(400).send('Flipkart URL is required.');
-        }
-
-        console.log(`Starting Puppeteer for URL: ${flipkartUrl}`);
-
-        // Launch Puppeteer with specific configurations for compatibility
-        browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        const browser = await initializeBrowser();
+        const productDetails = await scrapeFlipkartProduct(browser, flipkartUrl);
+        const amazonResults = await searchAmazon(browser, productDetails.productName);
+        
+        await browser.close();
+        
+        // Send combined results as a response
+        res.json({
+            productName: productDetails.productName,
+            extractedPrice: productDetails.extractedPrice,
+            amazonResults
         });
-
-        const page = await browser.newPage();
-        
-        console.log('Navigating to Flipkart...');
-        await page.goto(flipkartUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
-
-        console.log('Checking for product name selector...');
-        // Attempt to wait for selector with error handling
-        const productNameSelector = '._6EBuvT';
-        const isSelectorPresent = await page.waitForSelector(productNameSelector, { timeout: 10000 }).catch(() => null);
-        
-        if (!isSelectorPresent) {
-            throw new Error("Product name selector not found. The page structure might have changed.");
-        }
-
-        console.log('Extracting product name...');
-        const extractedText = await page.evaluate((selector) => {
-            const element = document.querySelector(selector);
-            return element ? element.innerText : 'Product name not found';
-        }, productNameSelector);
-
-        console.log(`Extracted product name: ${extractedText}`);
-        
-        // Respond with extracted product name
-        res.json({ productName: extractedText });
     } catch (error) {
-        console.error("Error running Puppeteer:", error);
-        res.status(500).json({ message: "Failed to run Puppeteer script", error: error.toString() });
-    } finally {
-        if (browser) {
-            await browser.close(); // Ensure the browser is closed even if an error occurs
-            console.log("Browser closed successfully.");
-        }
+        console.error("Error:", error);
+        res.status(500).send("An error occurred while processing your request.");
     }
 });
 
+// Initialize Puppeteer browser
+const initializeBrowser = async () => {
+    return await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+};
+
+// Scrape product details from Flipkart
+const scrapeFlipkartProduct = async (browser, url) => {
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    const productName = await getProductName(page);
+    const extractedPrice = await getProductPrice(page);
+
+    console.log('Extracted Price:', extractedPrice);
+    console.log('Extracted Product Name:', productName);
+
+    return { productName, extractedPrice };
+};
+
+// Get product name from Flipkart with alternative selectors
+const getProductName = async (page) => {
+    const selectors = ['._6EBuvT', 'span.B_NuCI'];  // Alternative selectors
+    for (const selector of selectors) {
+        try {
+            await page.waitForSelector(selector, { timeout: 60000 });
+            const productName = await page.evaluate(selector => {
+                const element = document.querySelector(selector);
+                return element ? element.innerText : null;
+            }, selector);
+            if (productName) return productName;
+        } catch (error) {
+            console.error(`Selector ${selector} not found for product name, trying next...`);
+        }
+    }
+    return 'Product name not found';
+};
+
+// Get product price from Flipkart with alternative selectors
+const getProductPrice = async (page) => {
+    const selectors = ['.Nx9bqj.CxhGGd', 'span._16Jk6d'];  // Alternative selectors
+    for (const selector of selectors) {
+        try {
+            await page.waitForSelector(selector, { timeout: 60000 });
+            const productPrice = await page.evaluate(selector => {
+                const element = document.querySelector(selector);
+                return element ? element.innerText : null;
+            }, selector);
+            if (productPrice) return productPrice;
+        } catch (error) {
+            console.error(`Selector ${selector} not found for product price, trying next...`);
+        }
+    }
+    return 'Price not found';
+};
+
+// Search for the product on Amazon based on the name
+const searchAmazon = async (browser, productName) => {
+    const page = await browser.newPage();
+    const amazonUrl = `https://www.amazon.in/s?k=${encodeURIComponent(productName)}`;
+    await page.goto(amazonUrl, { waitUntil: 'networkidle2' });
+
+    return await extractAmazonResults(page);
+};
+
+// Extract product details from Amazon search results
+const extractAmazonResults = async (page) => {
+    return await page.evaluate(() => {
+        const items = [];
+        const priceElements = document.querySelectorAll('.a-price-whole');
+        const ratingElements = document.querySelectorAll('.a-icon-alt');
+        const linkElements = document.querySelectorAll('.a-link-normal.s-underline-text.s-underline-link-text.s-link-style.a-text-normal');
+
+        for (let i = 0; i < Math.min(3, priceElements.length); i++) {
+            const price = priceElements[i]?.innerText || "No price available";
+            const rating = ratingElements[i]?.innerText?.slice(0, 3) || "No rating available";
+            const link = linkElements[i]?.href ? `https://www.amazon.in${linkElements[i].getAttribute('href')}` : "No link available";
+
+            items.push({ price, rating, link });
+        }
+        
+        return items;
+    });
+};
+
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port: ${PORT}`);
+    console.log(`Server is running on Port: ${PORT}`);
 });
