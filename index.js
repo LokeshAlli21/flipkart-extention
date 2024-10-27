@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import puppeteer from 'puppeteer';
+import chromium from 'chrome-aws-lambda'; // Import chrome-aws-lambda
 import express from 'express';
 import cors from 'cors';
 
@@ -39,19 +39,14 @@ app.get('/start-puppeteer', async (req, res) => {
     }
 });
 
-// Initialize Puppeteer browser
+// Initialize Puppeteer browser using chrome-aws-lambda
 const initializeBrowser = async () => {
     try {
-        return await puppeteer.launch({
+        return await chromium.puppeteer.launch({
+            args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath,
             headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage', // Prevents running out of memory in Docker
-                '--disable-infobars',
-                '--window-size=1920x1080',
-                '--remote-debugging-port=9222' // Useful for debugging
-            ],
         });
     } catch (error) {
         console.error('Failed to launch Puppeteer:', error);
