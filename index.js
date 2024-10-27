@@ -28,6 +28,7 @@ app.get('/start-puppeteer', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(flipkartUrl, { waitUntil: 'networkidle2', timeout: 30000 });
 
+        // Ensure selectors are correct
         await page.waitForSelector('._6EBuvT', { timeout: 10000 });
         const extractedText = await page.evaluate(() => {
             const element = document.querySelector('._6EBuvT');
