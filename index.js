@@ -28,7 +28,6 @@ app.get('/start-puppeteer', async (req, res) => {
         
         await browser.close();
         
-        // Send combined results as a response
         res.json({
             productName: productDetails.productName,
             extractedPrice: productDetails.extractedPrice,
@@ -36,7 +35,7 @@ app.get('/start-puppeteer', async (req, res) => {
         });
     } catch (error) {
         console.error("Error:", error);
-        res.status(500).send("An error occurred while processing your request.");
+        res.status(500).send(`An error occurred while processing your request: ${error.message}`);
     }
 });
 
