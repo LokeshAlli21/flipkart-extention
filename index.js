@@ -21,14 +21,15 @@ app.get('/', (req, res) => {
 // Route to accept Flipkart URL as a query parameter and use Puppeteer for scraping
 app.get('/start-puppeteer', async (req, res) => {
     try {
-        console.log("Received Flipkart URL:", req.query.url);
-        
         const flipkartUrl = req.query.url;
+
+        console.log("Received Flipkart URL:", flipkartUrl);
 
         if (!flipkartUrl) {
             return res.status(400).send('Flipkart URL is required.');
         }
 
+        // Launch Puppeteer browser instance
         const browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -36,7 +37,8 @@ app.get('/start-puppeteer', async (req, res) => {
 
         const page = await browser.newPage();
 
-        await page.goto(flipkartUrl, { waitUntil: 'networkidle2' });
+        // Navigate to the provided Flipkart URL
+        await page.goto(flipkartUrl, { waitUntil: 'networkidle2', timeout: 30000 });
 
         // Scrape the product name
         await page.waitForSelector('._6EBuvT', { timeout: 10000 });
@@ -57,10 +59,10 @@ app.get('/start-puppeteer', async (req, res) => {
 
         // Perform a search on Amazon using the extracted product name
         const amazonUrl = `https://www.amazon.in/s?k=${encodeURIComponent(extractedText)}`;
-        await page.goto(amazonUrl, { waitUntil: 'networkidle2' });
+        await page.goto(amazonUrl, { waitUntil: 'networkidle2', timeout: 30000 });
 
         // Scrape product details from Amazon search results
-        const results = await page.evaluate((extractedPrice) => {
+        const results = await page.evaluate(() => {
             const items = [];
             const priceElements = document.querySelectorAll('.a-price-whole');
             const ratingElements = document.querySelectorAll('.a-icon-alt');
@@ -71,14 +73,14 @@ app.get('/start-puppeteer', async (req, res) => {
                 const rating = ratingElements[i]?.innerText?.slice(0, 3) || "No rating available";
                 const link = linkElements[i]?.href ? `https://www.amazon.in${linkElements[i].href}` : "No link available";
 
-                items.push({ price, rating, link, extractedPrice });
+                items.push({ price, rating, link });
             }
 
             return items;
-        }, extractedPrice);
+        });
 
         console.log("Amazon Results:", results);
-        
+
         await browser.close();
 
         res.json({ results });
