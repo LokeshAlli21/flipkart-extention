@@ -1,67 +1,48 @@
-// Import necessary modules
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 import express from 'express';
 import cors from 'cors';
 
-// Load environment variables
 dotenv.config();
 
-// Create an Express application
 const app = express();
-
-// Enable CORS for all requests
 app.use(cors());
 
-// Define a simple route to verify server status
 app.get('/', (req, res) => {
     res.send("Server is up and running!");
 });
 
-// Route to accept Flipkart URL as a query parameter and use Puppeteer for scraping
 app.get('/start-puppeteer', async (req, res) => {
     try {
         const flipkartUrl = req.query.url;
-
-        console.log("Received Flipkart URL:", flipkartUrl);
 
         if (!flipkartUrl) {
             return res.status(400).send('Flipkart URL is required.');
         }
 
-        // Launch Puppeteer browser instance
         const browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
 
         const page = await browser.newPage();
-
-        // Navigate to the provided Flipkart URL
         await page.goto(flipkartUrl, { waitUntil: 'networkidle2', timeout: 30000 });
 
-        // Scrape the product name
         await page.waitForSelector('._6EBuvT', { timeout: 10000 });
         const extractedText = await page.evaluate(() => {
             const element = document.querySelector('._6EBuvT');
             return element ? element.innerText : 'Product name not found';
         });
 
-        // Scrape the product price
         await page.waitForSelector('.Nx9bqj.CxhGGd', { timeout: 10000 });
         const extractedPrice = await page.evaluate(() => {
             const priceElement = document.querySelector('.Nx9bqj.CxhGGd');
             return priceElement ? priceElement.innerText : 'Price not found';
         });
 
-        console.log('Extracted Product:', extractedText);
-        console.log('Extracted Price:', extractedPrice);
-
-        // Perform a search on Amazon using the extracted product name
         const amazonUrl = `https://www.amazon.in/s?k=${encodeURIComponent(extractedText)}`;
         await page.goto(amazonUrl, { waitUntil: 'networkidle2', timeout: 30000 });
 
-        // Scrape product details from Amazon search results
         const results = await page.evaluate(() => {
             const items = [];
             const priceElements = document.querySelectorAll('.a-price-whole');
@@ -79,18 +60,14 @@ app.get('/start-puppeteer', async (req, res) => {
             return items;
         });
 
-        console.log("Amazon Results:", results);
-
         await browser.close();
-
-        res.json({ results });
+        res.json({ results: [{ extractedText, extractedPrice, ...results }] });
     } catch (error) {
         console.error("Error running Puppeteer:", error);
         res.status(500).send("Failed to run Puppeteer script: " + error.message);
     }
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`);
