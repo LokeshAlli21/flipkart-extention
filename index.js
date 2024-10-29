@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core'; // Use puppeteer-core for Vercel
 import express from 'express';
 import cors from 'cors';
 import chromium from 'chrome-aws-lambda'; 
