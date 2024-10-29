@@ -49,12 +49,17 @@ app.get('/start-puppeteer', async (req, res) => {
 // Initialize Puppeteer browser
 const initializeBrowser = async () => {
     return await puppeteer.launch({
-        args: [...chromium.args],
+        args: [
+            ...chromium.args,
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+        ],
         defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath,
         headless: true,
     });
 };
+
 
 // Scrape product details from Flipkart
 const scrapeFlipkartProduct = async (browser, url) => {
