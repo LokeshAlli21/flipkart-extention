@@ -9,8 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "build": "node index.js",
-    "postinstall": "npm install --legacy-peer-deps"
+    "build": "node index.js"
   },
   "keywords": [],
   "author": "Satish Miral",
