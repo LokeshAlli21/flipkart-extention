@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 import express from 'express';
 import cors from 'cors';
+import chromium from 'chrome-aws-lambda'; 
 dotenv.config();
 
 const app = express();
@@ -42,8 +43,10 @@ app.get('/start-puppeteer', async (req, res) => {
 // Initialize Puppeteer browser
 const initializeBrowser = async () => {
     return await puppeteer.launch({
+        args: [...chromium.args],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath,
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 };
 
