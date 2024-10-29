@@ -6,7 +6,7 @@ import chromium from 'chrome-aws-lambda';
 dotenv.config();
 
 const app = express();
-const allowedOrigins = ['chrome-extension://phjecfhdmbjnffjbimoebkmpgdgclenb']; // Replace <your-extension-id>
+const allowedOrigins = [`chrome-extension://${process.env.CHROME_EXTENTION_ID || 'phjecfhdmbjnffjbimoebkmpgdgclenb'}`]; // Replace <your-extension-id>
 
 app.use(cors({
     origin: allowedOrigins,
