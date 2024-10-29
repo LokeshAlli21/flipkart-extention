@@ -1,12 +1,12 @@
+// moving to prev version --force
 import dotenv from 'dotenv';
-dotenv.config();
-
-import chromium from 'chrome-aws-lambda'; // Import chrome-aws-lambda
+import puppeteer from 'puppeteer';
 import express from 'express';
 import cors from 'cors';
+dotenv.config();
 
 const app = express();
-app.use(cors()); // Enable CORS for all requests
+app.use(cors());  // Enable CORS for all requests
 
 // Health check route
 app.get('/', (req, res) => {
@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 });
 
 // Route to handle Flipkart URL input
-app.get('/start-puppeteer', async (req, res) => {
+app.get('/start-puppeteer', async (req, res) => { 
     const flipkartUrl = req.query.url;
 
     if (!flipkartUrl) {
@@ -25,9 +25,9 @@ app.get('/start-puppeteer', async (req, res) => {
         const browser = await initializeBrowser();
         const productDetails = await scrapeFlipkartProduct(browser, flipkartUrl);
         const amazonResults = await searchAmazon(browser, productDetails.productName);
-
+        
         await browser.close();
-
+        
         res.json({
             productName: productDetails.productName,
             extractedPrice: productDetails.extractedPrice,
@@ -39,19 +39,12 @@ app.get('/start-puppeteer', async (req, res) => {
     }
 });
 
-// Initialize Puppeteer browser using chrome-aws-lambda
+// Initialize Puppeteer browser
 const initializeBrowser = async () => {
-    try {
-        return await chromium.puppeteer.launch({
-            args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
-            headless: true,
-        });
-    } catch (error) {
-        console.error('Failed to launch Puppeteer:', error);
-        throw new Error('Could not initialize browser. Please check the server environment.');
-    }
+    return await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
 };
 
 // Scrape product details from Flipkart
@@ -70,7 +63,7 @@ const scrapeFlipkartProduct = async (browser, url) => {
 
 // Get product name from Flipkart with alternative selectors
 const getProductName = async (page) => {
-    const selectors = ['._6EBuvT', 'span.B_NuCI']; // Alternative selectors
+    const selectors = ['._6EBuvT', 'span.B_NuCI'];  // Alternative selectors
     for (const selector of selectors) {
         try {
             await page.waitForSelector(selector, { timeout: 60000 });
@@ -88,7 +81,7 @@ const getProductName = async (page) => {
 
 // Get product price from Flipkart with alternative selectors
 const getProductPrice = async (page) => {
-    const selectors = ['.Nx9bqj.CxhGGd', 'span._16Jk6d']; // Alternative selectors
+    const selectors = ['.Nx9bqj.CxhGGd', 'span._16Jk6d'];  // Alternative selectors
     for (const selector of selectors) {
         try {
             await page.waitForSelector(selector, { timeout: 60000 });
@@ -128,7 +121,7 @@ const extractAmazonResults = async (page) => {
 
             items.push({ price, rating, link });
         }
-
+        
         return items;
     });
 };
