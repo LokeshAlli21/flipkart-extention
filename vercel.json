@@ -5,8 +5,7 @@
             "src": "./index.js",
             "use": "@vercel/node",
             "config": {
-                "includeFiles": ["node_modules/chrome-aws-lambda/.bin/chromium"],
-                "maxDuration": 10 
+                "includeFiles": ["node_modules/chrome-aws-lambda/.bin/chromium"]
             }
         }
     ],
@@ -22,7 +21,8 @@
     "functions": {
         "api/*": {
             "runtime": "nodejs18.x",
-            "memory": 3008 
+            "memory": 1024,
+            "maxDuration": 10
         }
     }
 }

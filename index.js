@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 });
 
 // Route to handle Flipkart URL input
-app.get('/start-puppeteer', async (req, res) => { 
+app.get('/api/start-puppeteer', async (req, res) => { 
     const flipkartUrl = req.query.url;
 
     if (!flipkartUrl) {
