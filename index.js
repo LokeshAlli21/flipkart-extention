@@ -1,4 +1,3 @@
-// moving to prev version --force
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 import express from 'express';
@@ -54,26 +53,15 @@ const initializeBrowser = async () => {
 // Scrape product details from Flipkart
 const scrapeFlipkartProduct = async (browser, url) => {
     const page = await browser.newPage();
-    
-    // Set user agent to mimic a regular browser
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36');
+    await page.goto(url, { waitUntil: 'networkidle2' });
 
-    try {
-        console.log('Navigating to URL:', url);
-        await page.goto(url, { waitUntil: 'networkidle2' });
-        console.log('Successfully navigated to URL.');
-        
-        const productName = await getProductName(page);
-        const extractedPrice = await getProductPrice(page);
+    const productName = await getProductName(page);
+    const extractedPrice = await getProductPrice(page);
 
-        console.log('Extracted Price:', extractedPrice);
-        console.log('Extracted Product Name:', productName);
+    console.log('Extracted Price:', extractedPrice);
+    console.log('Extracted Product Name:', productName);
 
-        return { productName, extractedPrice };
-    } catch (error) {
-        console.error('Error scraping product:', error);
-        throw new Error('Failed to scrape product');
-    }
+    return { productName, extractedPrice };
 };
 
 // Get product name from Flipkart with alternative selectors
@@ -116,12 +104,7 @@ const getProductPrice = async (page) => {
 const searchAmazon = async (browser, productName) => {
     const page = await browser.newPage();
     const amazonUrl = `https://www.amazon.in/s?k=${encodeURIComponent(productName)}`;
-    try {
-        console.log('Searching Amazon for product:', productName);
-        await page.goto(amazonUrl, { waitUntil: 'networkidle2' });
-    } catch (error) {
-        console.error('Error navigating to Amazon:', error);
-    }
+    await page.goto(amazonUrl, { waitUntil: 'networkidle2' });
 
     return await extractAmazonResults(page);
 };
