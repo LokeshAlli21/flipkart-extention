@@ -53,6 +53,7 @@ const initializeBrowser = async () => {
             ...chromium.args,
             '--no-sandbox',
             '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
         ],
         defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath,
