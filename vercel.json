@@ -20,7 +20,7 @@
         "PUPPETEER_SKIP_DOWNLOAD": "true" 
     },
     "functions": {
-        "index.js": {
+        "api/*": {
             "runtime": "nodejs18.x",
             "memory": 3008 
         }
