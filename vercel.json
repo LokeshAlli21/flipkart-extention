@@ -1,19 +1,20 @@
 {
     "version": 2,
     "functions": {
-        "api/**/*.js": {
+        "api/index.js": {
             "runtime": "nodejs18.x",
             "memory": 1024,
             "maxDuration": 10,
             "env": {
                 "PUPPETEER_SKIP_DOWNLOAD": "true"
-            }
+            },
+            "includeFiles": ["node_modules/chrome-aws-lambda/.bin/chromium"]
         }
     },
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "/"
+            "dest": "/api/index.js"
         }
     ]
 }
