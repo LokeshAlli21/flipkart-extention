@@ -6,7 +6,14 @@ import chromium from 'chrome-aws-lambda';
 dotenv.config();
 
 const app = express();
-app.use(cors());  // Enable CORS for all requests
+const allowedOrigins = ['chrome-extension://phjecfhdmbjnffjbimoebkmpgdgclenb']; // Replace <your-extension-id>
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true, // If you need to send cookies or authorization headers
+}));
+
 
 // Health check route
 app.get('/', (req, res) => {
