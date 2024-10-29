@@ -11,10 +11,6 @@
     "start": "node index.js",
     "build": "node index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/SatishMiral/puppeteer.git"
-  },
   "keywords": [],
   "author": "Satish Miral",
   "license": "ISC",

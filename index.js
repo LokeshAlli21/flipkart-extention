@@ -1,9 +1,8 @@
 import dotenv from 'dotenv';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import express from 'express';
 import cors from 'cors';
-import chromium from 'chrome-aws-lambda';
-
+import chromium from 'chrome-aws-lambda'; 
 dotenv.config();
 
 const app = express();
@@ -66,7 +65,7 @@ const scrapeFlipkartProduct = async (browser, url) => {
 
 // Get product name from Flipkart with alternative selectors
 const getProductName = async (page) => {
-    const selectors = ['._6EBuvT', 'span.B_NuCI'];
+    const selectors = ['._6EBuvT', 'span.B_NuCI'];  // Alternative selectors
     for (const selector of selectors) {
         try {
             await page.waitForSelector(selector, { timeout: 60000 });
@@ -84,7 +83,7 @@ const getProductName = async (page) => {
 
 // Get product price from Flipkart with alternative selectors
 const getProductPrice = async (page) => {
-    const selectors = ['.Nx9bqj.CxhGGd', 'span._16Jk6d'];
+    const selectors = ['.Nx9bqj.CxhGGd', 'span._16Jk6d'];  // Alternative selectors
     for (const selector of selectors) {
         try {
             await page.waitForSelector(selector, { timeout: 60000 });
